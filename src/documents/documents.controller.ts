@@ -2,7 +2,9 @@ import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { AuthGuard } from '../core/guards/auth.guard';
+import { RolesGuard } from '../core/guards/roles.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Roles } from '../core/decoraters/roles.decorater';
 
 import {
   ApiBearerAuth,
@@ -44,7 +46,8 @@ export class DocumentsController {
     summary: 'Upload Document',
     description: 'Upload Document',
   })
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
   @ApiBearerAuth('JWT-auth')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('document'))
@@ -53,7 +56,7 @@ export class DocumentsController {
       new ParseFilePipe({
         validators: [
           new FileTypeValidator({
-            fileType: '.(png|jpeg|jpg|webp|tiff)',
+            fileType: '.(pdf|docx|doc|txt)',
           }),
           new MaxFileSizeValidator({ maxSize: 20000000 }),
         ],
@@ -64,8 +67,7 @@ export class DocumentsController {
             // differentiates between type or size exception
             exceptionMessage = 'File size should be less than 20MB';
           } else {
-            exceptionMessage =
-              'Accepted file types are: png, jpeg, jpg, webp and tiff';
+            exceptionMessage = 'Accepted file types are: pdf|docx|doc|txt';
           }
           return new HttpException(
             exceptionMessage,
@@ -79,11 +81,12 @@ export class DocumentsController {
     @Body() createDocumentDto: CreateDocumentDto,
     @Request() req,
   ) {
-    return this.documentsService.upload(
+    const result = await this.documentsService.upload(
       createDocumentDto,
       document,
       req.user.id,
     );
+    return { result, message: 'Documents uploaded successfully.' };
   }
 
   @Get()
@@ -109,8 +112,71 @@ export class DocumentsController {
   })
   @UseGuards(AuthGuard)
   @ApiBearerAuth('JWT-auth')
-  async findOne(@Param('id') id: string) {
-    const result = await this.documentsService.findOne(+id);
+  async findOne(@Param('id') id: number, @Request() req) {
+    const result = await this.documentsService.findOne(id, req.user);
     return { result, message: 'Document Fetched successfully.' };
+  }
+
+  @Patch(':id')
+  @ApiOperation({
+    summary: 'Update Document by ID',
+    description: 'Update Document by ID',
+  })
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
+  @ApiBearerAuth('JWT-auth')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('document'))
+  async update(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new FileTypeValidator({
+            fileType: '.(pdf|docx|doc|txt)',
+          }),
+          new MaxFileSizeValidator({ maxSize: 20000000 }),
+        ],
+        fileIsRequired: false,
+        exceptionFactory: (error) => {
+          let exceptionMessage = '';
+          if (error.includes('size')) {
+            // differentiates between type or size exception
+            exceptionMessage = 'File size should be less than 20MB';
+          } else {
+            exceptionMessage = 'Accepted file types are: pdf|docx|doc|txt';
+          }
+          return new HttpException(
+            exceptionMessage,
+            HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+          );
+        },
+        errorHttpStatusCode: HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+      }),
+    )
+    document: Express.Multer.File,
+    @Param('id') id: number,
+    @Body() updateDocumentDto: UpdateDocumentDto,
+    @Request() req,
+  ) {
+    const result = await this.documentsService.update(
+      +id,
+      updateDocumentDto,
+      document,
+      req.user,
+    );
+    return { result, message: 'Document updated successfully.' };
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete Document by ID',
+    description: 'Delete Document by ID',
+  })
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
+  @ApiBearerAuth('JWT-auth')
+  async remove(@Param('id') id: number, @Request() req) {
+    const result = await this.documentsService.remove(id, req.user);
+    return { result, message: 'Document deleted successfully.' };
   }
 }

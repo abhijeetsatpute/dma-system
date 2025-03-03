@@ -40,6 +40,7 @@ export class Document extends Model<Document> {
   @Column({
     type: DataType.ENUM('pending', 'processing', 'completed', 'failed'),
     allowNull: false,
+    defaultValue: 'pending',
   })
   status: string;
 
