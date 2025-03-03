@@ -7,12 +7,12 @@ export class CreateDocumentDto {
     format: 'binary',
     required: true,
   })
-  readonly document: Express.Multer.File;
+  document: Express.Multer.File;
 
   @ApiProperty({
     default: 'filename',
     required: false,
   })
   @IsOptional()
-  readonly name?: string;
+  name?: string;
 }

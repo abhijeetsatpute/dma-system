@@ -101,7 +101,8 @@
       ".dto.ts",
       ".pipe.ts",
       ".strategy.ts",
-      ".middleware.ts"
+      ".middleware.ts",
+      "s3.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
