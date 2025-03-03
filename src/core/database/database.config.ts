@@ -14,7 +14,7 @@ const config = {
   password: DB_PASS,
   host: DB_HOST,
   port: DB_PORT,
-  dialect: DB_DIALECT,
+  dialect: DB_DIALECT ?? 'postgres',
   database: DB_NAME,
 };
 
