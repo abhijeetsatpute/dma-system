@@ -1,3 +1,6 @@
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 export const {
   PORT,
   DB_PORT,
@@ -8,4 +11,6 @@ export const {
   DB_DIALECT,
   DB_CERT,
   NODE_ENV,
+  ACCESS_TOKEN_SECRET,
+  ACCESS_TOKEN_EXPIRATION,
 } = process.env;

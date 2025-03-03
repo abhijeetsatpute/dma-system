@@ -1,5 +1,8 @@
+import * as bcrypt from 'bcrypt';
+
 import {
   AutoIncrement,
+  BeforeCreate,
   Column,
   DataType,
   Model,
@@ -45,4 +48,11 @@ export class User extends Model<User> {
     allowNull: false,
   })
   role: string;
+
+  @BeforeCreate
+  static async hashPassword(user: User) {
+    if (user.password) {
+      user.password = await bcrypt.hash(user.password, 10);
+    }
+  }
 }
