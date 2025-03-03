@@ -4,9 +4,24 @@ import { PORT } from './config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from './core/interceptors/response.interceptor';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
+import { VersioningType } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Global prefix
+  app.setGlobalPrefix('api');
+
+  // Allow CORS
+  app.enableCors({
+    allowedHeaders: '*',
+    origin: '*',
+  });
+
+  // API versioning
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
 
   // Apply the logging interceptor & Response transformer globally
   app.useGlobalInterceptors(
