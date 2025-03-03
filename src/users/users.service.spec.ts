@@ -111,7 +111,7 @@ describe('UsersService', () => {
       expect(result).toHaveProperty('user');
       expect(result.user.email).toBe(mockUser.email);
       expect(jwtService.signAsync).toHaveBeenCalledWith(
-        { id: mockUser.id, email: mockUser.email },
+        { id: mockUser.id, email: mockUser.email, roles: [mockUser.role] },
         { secret: ACCESS_TOKEN_SECRET, expiresIn: ACCESS_TOKEN_EXPIRATION },
       );
     });

@@ -3,8 +3,8 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
-import { User } from './entities/user.entity';
 import { ConflictException, HttpException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 
 const mockUser = {
   id: 1,
@@ -46,6 +46,7 @@ describe('UsersController', () => {
           provide: UsersService,
           useValue: mockUsersService,
         },
+        JwtService,
       ],
     }).compile();
 

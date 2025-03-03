@@ -102,6 +102,7 @@ export class UsersService {
         const payload = {
           id: user.id,
           email: user.email,
+          roles: [user.role],
         };
         tokens = await this.getTokens(payload);
 

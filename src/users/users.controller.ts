@@ -1,9 +1,20 @@
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Controller, Post, Body, Request } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User } from './entities/user.entity';
+import { AuthGuard } from '../core/guards/auth.guard';
+import { RolesGuard } from '../core/guards/roles.guard';
+import { Roles } from '../core/decoraters/roles.decorater';
+
+import {
+  Controller,
+  Post,
+  Body,
+  Request,
+  Get,
+  UseGuards,
+} from '@nestjs/common';
 
 @ApiTags('Auth / User Management')
 @Controller({
@@ -38,5 +49,16 @@ export class UsersController {
       authDto.password,
     );
     return { result, message: 'User validated successfully.' };
+  }
+
+  // testing auth apis
+  @Get('/whoiam')
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('viewer', 'editor', 'admin')
+  @ApiBearerAuth('JWT-auth')
+  async whoiam(@Request() req) {
+    return {
+      message: `hi ${req.user.email} with role ${req.user.roles}, you can access protected API !`,
+    };
   }
 }
