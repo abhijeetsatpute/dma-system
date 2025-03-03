@@ -43,7 +43,7 @@ import { databaseConfig } from 'src/core/database/database.config';
 
         return {
           ...config,
-          autoLoadModels: false,
+          autoLoadModels: true,
           synchronize: false,
         };
       },
