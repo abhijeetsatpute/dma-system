@@ -4,7 +4,7 @@ import { PORT } from './config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ResponseTransformInterceptor } from './core/interceptors/response.interceptor';
 import { LoggingInterceptor } from './core/interceptors/logging.interceptor';
-import { VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,6 +22,9 @@ async function bootstrap() {
   app.enableVersioning({
     type: VersioningType.URI,
   });
+
+  // global validation pipe to validate and transform incoming request data
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   // Apply the logging interceptor & Response transformer globally
   app.useGlobalInterceptors(
