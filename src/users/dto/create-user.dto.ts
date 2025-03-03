@@ -1,4 +1,4 @@
-import { Role } from 'src/core/constants';
+import { Role } from '../../core/constants';
 import { ApiProperty } from '@nestjs/swagger';
 
 import {
@@ -48,5 +48,5 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   @IsEnum(Role)
-  role: Role;
+  role: string;
 }

@@ -23,7 +23,8 @@
     "db:create-migration": "npx sequelize-cli migration:generate --name ",
     "db:create-seeder": "npx sequelize-cli seed:generate --name ",
     "db:undo-migration": "npx sequelize-cli db:migrate:undo",
-    "db:undo-seeder": "npx sequelize-cli db:seed:undo"
+    "db:undo-seeder": "npx sequelize-cli db:seed:undo",
+    "prepare": "husky"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -36,6 +37,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "husky": "^9.1.7",
     "pg": "^8.13.3",
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.2.0",
@@ -45,6 +47,7 @@
     "sequelize-typescript": "^2.1.6"
   },
   "devDependencies": {
+    "@golevelup/ts-jest": "^0.6.2",
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
@@ -80,6 +83,23 @@
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
+    ],
+    "coveragePathIgnorePatterns": [
+      "node_modules",
+      "test-config",
+      "interfaces",
+      "jestGlobalMocks.ts",
+      ".module.ts",
+      "src/app/main.ts",
+      "src/core/",
+      "src/config/",
+      ".mock.ts",
+      "src/main.ts",
+      ".entity.ts",
+      ".dto.ts",
+      ".pipe.ts",
+      ".strategy.ts",
+      ".middleware.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
