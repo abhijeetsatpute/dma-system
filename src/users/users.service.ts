@@ -144,6 +144,7 @@ export class UsersService {
             [Op.not]: userId,
           },
         },
+        attributes: { exclude: ['password'] },
         order: [['updatedAt', 'DESC']],
       });
 

@@ -58,7 +58,7 @@ export class UsersController {
     return { result, message: 'User validated successfully.' };
   }
 
-  @Get('/all-users')
+  @Get()
   @ApiOperation({
     summary: 'Get all users',
     description: 'Get all users.',
