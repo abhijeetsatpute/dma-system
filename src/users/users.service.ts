@@ -216,7 +216,9 @@ export class UsersService {
         where: {
           id: userId,
         },
+        transaction,
       });
+      await transaction.commit();
     } catch (error) {
       await transaction.rollback();
       this.logger.error('UsersService', {

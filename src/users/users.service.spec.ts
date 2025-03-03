@@ -1,11 +1,16 @@
-import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
-import { JwtService } from '@nestjs/jwt';
 import { UsersService } from './users.service';
+import { JwtService } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/sequelize';
-import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { User } from './entities/user.entity';
+import * as bcrypt from 'bcrypt';
+import {
+  ConflictException,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } from '../config';
+import { Op } from 'sequelize';
 
 // Mock User data
 const mockUser = {
@@ -23,6 +28,11 @@ const mockCreateUserDto = {
   role: 'admin',
 };
 
+const mockUpdateUserDto = {
+  username: 'john_updated',
+  role: 'editor',
+};
+
 // Mock bcrypt comparison
 jest.mock('bcrypt');
 jest.mock('@nestjs/jwt');
@@ -35,6 +45,10 @@ describe('UsersService', () => {
   const mockUserRepository = {
     create: jest.fn(),
     findOne: jest.fn(),
+    findByPk: jest.fn(),
+    findAll: jest.fn(),
+    destroy: jest.fn(),
+    update: jest.fn(),
     sequelize: {
       transaction: jest.fn().mockResolvedValue({
         commit: jest.fn(),
@@ -149,6 +163,102 @@ describe('UsersService', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         expect(error.message).toBe('Check your login method');
+      }
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('should fetch all users except the current user', async () => {
+      userRepository.findAll.mockResolvedValueOnce([mockUser]);
+
+      const result = await service.getAllUsers(mockUser.id);
+      expect(result).toEqual([mockUser]);
+      expect(userRepository.findAll).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ id: { [Op.not]: mockUser.id } }),
+        }),
+      );
+    });
+
+    it('should throw NotFoundException if no users are found', async () => {
+      userRepository.findAll.mockResolvedValueOnce([]);
+
+      try {
+        await service.getAllUsers(mockUser.id);
+      } catch (error) {
+        expect(error.message).toBe('No users present');
+      }
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should successfully update user details', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(mockUser);
+      userRepository.update.mockResolvedValueOnce([1]);
+
+      await service.updateUser(mockUser.id, mockUpdateUserDto);
+      expect(userRepository.update).toHaveBeenCalledWith(mockUpdateUserDto, {
+        where: { id: mockUser.id },
+        transaction: expect.any(Object),
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(null);
+
+      try {
+        await service.updateUser(mockUser.id, mockUpdateUserDto);
+      } catch (error) {
+        expect(error.message).toBe('User Not Found');
+      }
+    });
+
+    it('should rollback the transaction if update fails', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(mockUser);
+      userRepository.update.mockRejectedValueOnce(
+        new Error('Error updating user'),
+      );
+
+      try {
+        await service.updateUser(mockUser.id, mockUpdateUserDto);
+      } catch (error) {
+        expect(error.message).toBe('Error updating user');
+      }
+    });
+  });
+
+  describe('deleteUser', () => {
+    it('should successfully delete a user', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(mockUser);
+      userRepository.destroy.mockResolvedValueOnce(1);
+
+      await service.deleteUser(mockUser.id);
+      expect(userRepository.destroy).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+        transaction: expect.any(Object),
+      });
+    });
+
+    it('should throw NotFoundException if user is not found', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(null);
+
+      try {
+        await service.deleteUser(mockUser.id);
+      } catch (error) {
+        expect(error.message).toBe('User Not Found');
+      }
+    });
+
+    it('should rollback the transaction if delete fails', async () => {
+      userRepository.findByPk.mockResolvedValueOnce(mockUser);
+      userRepository.destroy.mockRejectedValueOnce(
+        new Error('Error deleting user'),
+      );
+
+      try {
+        await service.deleteUser(mockUser.id);
+      } catch (error) {
+        expect(error.message).toBe('Error deleting user');
       }
     });
   });

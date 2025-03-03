@@ -3,8 +3,12 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { ConflictException, HttpException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { AuthGuard } from '../core/guards/auth.guard';
+import { RolesGuard } from '../core/guards/roles.guard';
+import { Roles } from '../core/decoraters/roles.decorater';
 
 const mockUser = {
   id: 1,
@@ -26,17 +30,25 @@ const mockLoginUserDto: LoginUserDto = {
   password: 'password123',
 };
 
+const mockUpdateUserDto: UpdateUserDto = {
+  username: 'updated_user',
+  role: 'editor',
+};
+
+const mockUsersService = {
+  createUser: jest.fn().mockResolvedValue(mockUser),
+  validateUser: jest.fn().mockResolvedValue({
+    accessToken: 'validAccessToken',
+    user: mockUser,
+  }),
+  getAllUsers: jest.fn().mockResolvedValue([mockUser]),
+  updateUser: jest.fn().mockResolvedValue(mockUser),
+  deleteUser: jest.fn().mockResolvedValue({}),
+};
+
 describe('UsersController', () => {
   let controller: UsersController;
   let usersService: UsersService;
-
-  const mockUsersService = {
-    createUser: jest.fn().mockResolvedValue(mockUser),
-    validateUser: jest.fn().mockResolvedValue({
-      accessToken: 'validAccessToken',
-      user: mockUser,
-    }),
-  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -111,6 +123,45 @@ describe('UsersController', () => {
         expect(error).toBeInstanceOf(HttpException);
         expect(error.message).toBe('Email or password is incorrect');
       }
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('should return all users', async () => {
+      const result = await controller.getAllUsers({ user: mockUser });
+      expect(result).toEqual({ result: [mockUser] });
+      expect(mockUsersService.getAllUsers).toHaveBeenCalledWith(mockUser.id);
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should successfully update a user', async () => {
+      const result = await controller.updateUser(1, mockUpdateUserDto);
+      expect(result).toEqual({
+        result: mockUser,
+        message: 'User updated successfully.',
+      });
+      expect(mockUsersService.updateUser).toHaveBeenCalledWith(
+        1,
+        mockUpdateUserDto,
+      );
+    });
+  });
+
+  describe('deleteUser', () => {
+    it('should successfully delete a user', async () => {
+      const result = await controller.deleteUser(1);
+      expect(result).toEqual({
+        result: {},
+        message: 'User deleted successfully.',
+      });
+      expect(mockUsersService.deleteUser).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('whoiam', () => {
+    it('should return user info based on roles', async () => {
+      await controller.whoiam({ user: mockUser });
     });
   });
 });
