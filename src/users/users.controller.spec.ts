@@ -6,9 +6,6 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ConflictException, HttpException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '../core/guards/auth.guard';
-import { RolesGuard } from '../core/guards/roles.guard';
-import { Roles } from '../core/decoraters/roles.decorater';
 
 const mockUser = {
   id: 1,

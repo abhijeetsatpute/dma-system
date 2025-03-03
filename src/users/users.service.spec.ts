@@ -1,16 +1,12 @@
-import { UsersService } from './users.service';
-import { JwtService } from '@nestjs/jwt';
-import { getModelToken } from '@nestjs/sequelize';
-import { Test, TestingModule } from '@nestjs/testing';
-import { User } from './entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import {
-  ConflictException,
-  HttpException,
-  NotFoundException,
-} from '@nestjs/common';
-import { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } from '../config';
 import { Op } from 'sequelize';
+import { User } from './entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
+import { UsersService } from './users.service';
+import { getModelToken } from '@nestjs/sequelize';
+import { HttpException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } from '../config';
 
 // Mock User data
 const mockUser = {
