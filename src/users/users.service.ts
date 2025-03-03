@@ -1,5 +1,7 @@
 import * as bcrypt from 'bcrypt';
-
+import { InjectModel } from '@nestjs/sequelize';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Op, Transaction } from 'sequelize';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
@@ -11,8 +13,8 @@ import {
   HttpStatus,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 
 @Injectable()
 export class UsersService {
@@ -125,6 +127,100 @@ export class UsersService {
     } catch (error) {
       this.logger.error(UsersService.name, {
         message: `Error in createUser:${error}`,
+      });
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  // fetch all users users except userId
+  async getAllUsers(userId: number): Promise<User[]> {
+    try {
+      const users = await this.userRepository.findAll({
+        where: {
+          id: {
+            [Op.not]: userId,
+          },
+        },
+        order: [['updatedAt', 'DESC']],
+      });
+
+      if (!users.length) {
+        throw new NotFoundException('No users present');
+      }
+
+      return users;
+    } catch (error) {
+      this.logger.error('UsersService', {
+        message: `Error in getAllUsers: ${error}`,
+      });
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async updateUser(userId: number, data: UpdateUserDto): Promise<void> {
+    const transaction: Transaction =
+      await this.userRepository.sequelize.transaction();
+    try {
+      const user = await this.userRepository.findByPk(userId, {
+        transaction,
+      });
+
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      }
+
+      await this.userRepository.update(
+        {
+          ...data,
+        },
+        {
+          where: {
+            id: userId,
+          },
+          transaction,
+        },
+      );
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      this.logger.error('UsersService', {
+        message: `Error in updateUser: ${error}`,
+      });
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    const transaction: Transaction =
+      await this.userRepository.sequelize.transaction();
+    try {
+      const user = await this.userRepository.findByPk(userId, {
+        transaction,
+      });
+
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      }
+
+      await this.userRepository.destroy({
+        where: {
+          id: userId,
+        },
+      });
+    } catch (error) {
+      await transaction.rollback();
+      this.logger.error('UsersService', {
+        message: `Error in deleteUser: ${error}`,
       });
       throw new HttpException(
         error.message,
