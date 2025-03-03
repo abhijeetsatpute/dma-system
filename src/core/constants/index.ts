@@ -6,3 +6,10 @@ export enum Role {
   EDITOR = 'editor',
   VIEWER = 'viewer',
 }
+
+export enum DocumentStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}

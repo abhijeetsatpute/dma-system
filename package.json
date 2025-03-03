@@ -34,6 +34,7 @@
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/sequelize": "^11.0.0",
     "@nestjs/swagger": "^11.0.6",
+    "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -52,6 +53,7 @@
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.2",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.3.1",
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
@@ -99,7 +101,8 @@
       ".dto.ts",
       ".pipe.ts",
       ".strategy.ts",
-      ".middleware.ts"
+      ".middleware.ts",
+      "s3.service.ts"
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
