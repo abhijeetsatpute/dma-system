@@ -9,5 +9,6 @@ import { S3Service } from '../s3/s3.service';
   imports: [SequelizeModule.forFeature([Document])],
   controllers: [DocumentsController],
   providers: [DocumentsService, S3Service],
+  exports: [DocumentsService],
 })
 export class DocumentsModule {}

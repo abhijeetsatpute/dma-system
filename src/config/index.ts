@@ -19,4 +19,6 @@ export const {
   AWS_S3_BUCKET_NAME,
   AWS_S3_PATH,
   AWS_S3_SIGNED_URL_EXPIRATION,
+  PYTHON_API,
+  WEBHOOK,
 } = process.env;

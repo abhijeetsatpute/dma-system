@@ -6,6 +6,7 @@ import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './users/users.module';
 import { S3Module } from './s3/s3.module';
 import { DocumentsModule } from './documents/documents.module';
+import { IngestionModule } from './ingestion/ingestion.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DocumentsModule } from './documents/documents.module';
     UsersModule,
     S3Module,
     DocumentsModule,
+    IngestionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
