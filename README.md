@@ -1,13 +1,14 @@
-# Document Management QnA
+# Document Management QnA - [Project Dashboard](https://github.com/users/abhijeetsatpute/projects/13)
 
 This repository contains a NestJS Backend service for Document Management and RAG-based Q&A Application with Users Management, Document Management And Ingestion Webhook and Ingestion Trigger APIs which ingests the documents stroed in s3 to a dummy Python Backend.
 
 ## Technologies
 
 - **Backend**: [NestJS](https://nestjs.com/)
-- **Database**: PostgreSQL with Sequelize ORM
-- **Authentication**: JWT (JSON Web Tokens)
-- **File Storage**: AWS Sdk wrapper for S3 file management
+- **Database**: PostgreSQL with Sequelize ORM with migrations & seeder files for Database schema version control following the Database first approach.
+- **Authentication & Authorization**: JWT (JSON Web Tokens) for verifying user's idenetity & user roles for RBAC protected API's
+- **File Storage**: AWS Sdk wrapper for S3 file storage, retrival & deletion
+- **Husky pre-commit hook**: pre-commit hook runs the unit test suite making sure no broken code is commited
 
 ## Project Structure
 
@@ -70,6 +71,11 @@ Below is the **Low-Level Design** of the system, illustrating how the document s
 6. **Start the backend in development mode**
    ```bash
    yarn start:dev
+Swagger UI API Documentation
+-----------------
+>Once the Backend is up and running with migrations & seeder being ran, head over to `http://localhost:5000/api-path` to find the Swagger Docs for all the implemeted API's.
+![Low-Level Design](docs/swagger.png)
+
 Available Scripts
 -----------------
 -   **dev**: Start the backend in watch mode (development)
