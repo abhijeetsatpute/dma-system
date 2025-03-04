@@ -4,8 +4,9 @@ import { S3Service } from '../s3/s3.service';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
-import { Role } from '../core/constants';
+import { DocumentStatus, Role } from '../core/constants';
 import { getModelToken } from '@nestjs/sequelize';
+import { NotFoundException } from '@nestjs/common';
 
 describe('DocumentsService', () => {
   let service: DocumentsService;
@@ -23,6 +24,7 @@ describe('DocumentsService', () => {
             create: jest.fn(),
             findAndCountAll: jest.fn(),
             findByPk: jest.fn(),
+            findOne: jest.fn(),
             update: jest.fn(),
             destroy: jest.fn(),
             sequelize: {
@@ -582,6 +584,98 @@ describe('DocumentsService', () => {
           status: 400,
         }),
       );
+    });
+  });
+
+  describe('updateDocumentStatus', () => {
+    it('should update document status successfully', async () => {
+      const id = 1;
+      const status = DocumentStatus.PROCESSING;
+      const documentEntry = { id, status: DocumentStatus.PENDING };
+
+      jest
+        .spyOn(documentRepository, 'findByPk')
+        .mockResolvedValueOnce(documentEntry);
+      jest.spyOn(documentRepository, 'update').mockResolvedValueOnce([1]);
+
+      const result = await service.updateDocumentStatus(id, status);
+      expect(result).toEqual([1]);
+    });
+
+    it('should throw an error if document is not found', async () => {
+      const id = 1;
+      jest.spyOn(documentRepository, 'findByPk').mockResolvedValueOnce(null);
+
+      await expect(
+        service.updateDocumentStatus(id, DocumentStatus.PROCESSING),
+      ).rejects.toThrow('Document Not Found');
+    });
+  });
+
+  describe('getDocumentStatus', () => {
+    it('should return document status', async () => {
+      const id = 1;
+      const user = { id: 1, roles: ['USER'] };
+      const documentEntry = { id, status: DocumentStatus.PENDING };
+      jest
+        .spyOn(documentRepository, 'findOne')
+        .mockResolvedValueOnce(documentEntry);
+
+      const result = await service.getDocumentStatus(user, id);
+      expect(result).toEqual(documentEntry);
+    });
+
+    it('should throw an error if document is not found', async () => {
+      const id = 1;
+      const user = { id: 1, roles: ['USER'] };
+      jest.spyOn(documentRepository, 'findOne').mockResolvedValueOnce(null);
+
+      await expect(service.getDocumentStatus(user, id)).rejects.toThrow(
+        'Document Not Found',
+      );
+    });
+  });
+
+  describe('getAllOngoingIngestions', () => {
+    it('should return ongoing ingestions for admin', async () => {
+      const user = { id: 1, roles: ['ADMIN'] };
+      const documents = {
+        totalRecords: 1,
+        entries: [{ id: 1, status: DocumentStatus.PENDING }],
+      };
+      jest
+        .spyOn(documentRepository, 'findAndCountAll')
+        .mockResolvedValueOnce(1);
+
+      const result = await service.getAllOngoingIngestions(
+        user,
+        DocumentStatus.PENDING,
+        10,
+        0,
+      );
+      expect(result).toEqual({ entries: undefined, totalRecords: undefined });
+    });
+
+    it('should return ongoing ingestions for user', async () => {
+      const user = { id: 2, roles: ['USER'] };
+      const documents = {
+        count: 1,
+        rows: [{ id: 1, status: DocumentStatus.PENDING, uploadedBy: 2 }],
+      };
+      jest
+        .spyOn(documentRepository, 'findAndCountAll')
+        .mockResolvedValueOnce(documents);
+
+      const result = await service.getAllOngoingIngestions(
+        user,
+        DocumentStatus.PENDING,
+        10,
+        0,
+      );
+      expect(result).toEqual({
+        entries: documents.rows,
+        totalRecords: documents.count,
+      });
     });
   });
 });
