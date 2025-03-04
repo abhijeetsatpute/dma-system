@@ -26,7 +26,8 @@ dma-system/
     |
     ├── .env # Environment variable 
     ├── package.json # Root package configuration 
-    └── README.md # Project documentation
+    ├── README.md # Project documentation
+    └── docs/ # Documentation files
 ```
 
 ## High-Level Design
@@ -74,10 +75,181 @@ Below is the **Low-Level Design** of the system, illustrating how the document s
 Swagger UI API Documentation
 -----------------
 >Once the Backend is up and running with migrations & seeder being ran, head over to `http://localhost:5000/api-path` to find the Swagger Docs for all the implemeted API's.
-![Low-Level Design](docs/swagger.png)
+![Swagger API Documentation](docs/swagger.png)
 
-Available Scripts
------------------
+
+Core API Documentation
+======================
+
+1\. Generate Test Users
+-----------------------
+
+### Endpoint:
+
+```
+POST /api/v1/users/generate/viewer?users=10&password=Password%40123
+
+```
+
+### Description:
+
+Generates test users with the role of either **viewer** or **editor**.
+
+### Access Control:
+
+-   This API is **admin role protected**.
+-   Only an **admin** can use this endpoint.
+
+### Query Parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| users | int | Number of test users to generate |
+| password | string | Password for the generated users |
+
+* * * * *
+
+2\. Document Upload & Create
+----------------------------
+
+### Endpoint:
+
+```
+POST /api/v1/documents
+
+```
+
+### Description:
+
+Uploads a document (PDF or DOCX) to an **S3 bucket** and saves the file metadata (key, name, and document ID) in the database.
+
+### Access Control:
+
+-   **Admin** and **Editor** roles can use this API.
+
+### Headers:
+
+| Header | Value |
+| --- | --- |
+| Accept | */* |
+| Content-Type | multipart/form-data |
+
+### Form Data:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| document | file | The document file (PDF/DOCX) to upload |
+| name | string | The file name |
+
+* * * * *
+
+3\. Document Ingestion Trigger
+------------------------------
+
+### Endpoint:
+
+```
+POST /api/ingestion/trigger/{document_id}
+
+```
+
+### Description:
+
+Triggers document ingestion by sending the document to an **external Python service**.
+
+### Access Control:
+
+-   **Admin** and **Editor** roles can use this API.
+
+### Path Parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| document_id | int | ID of the document to be ingested |
+
+* * * * *
+
+4\. Document Ingestion Status Webhook
+-------------------------------------
+
+### Endpoint:
+
+```
+POST /api/ingestion/status
+
+```
+
+### Description:
+
+Receives **status updates** from the external Python service regarding document ingestion.
+
+### Headers:
+
+| Header | Value |
+| --- | --- |
+| Accept | */* |
+| Content-Type | application/json |
+
+### Request Body:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| status | string | Ingestion status (e.g., failed, completed) |
+| document_id | int | ID of the document |
+
+* * * * *
+
+5\. Get Document Ingestion Status by Document ID
+------------------------------------------------
+
+### Endpoint:
+
+```
+GET /api/ingestion/document/{document_id}
+
+```
+
+### Description:
+
+Retrieves the **ingestion status** of a specific document.
+
+### Path Parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| document_id | int | ID of the document |
+
+* * * * *
+
+6\. Get All Ongoing Ingestions
+------------------------------
+
+### Endpoint:
+
+```
+GET /api/ingestion/pending?limit=10&offset=0
+
+```
+
+### Description:
+
+Fetches all ongoing document ingestions filtered by **status**.
+
+### Query Parameters:
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| limit | int | Number of results to return |
+| offset | int | Pagination offset |
+
+### Possible Ingestion Statuses:
+
+-   `PENDING` = pending
+-   `PROCESSING` = processing
+-   `COMPLETED` = completed
+-   `FAILED` = failed
+
+## Available Scripts in package.json
 -   **dev**: Start the backend in watch mode (development)
     ```bash
     yarn start:dev

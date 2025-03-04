@@ -39,7 +39,7 @@ export class IngestionController {
     };
   }
 
-  @Get('/trigger/:id')
+  @Post('/trigger/:id')
   @ApiOperation({
     summary: 'Trigger Document ingestion document id',
     description: 'Trigger Document ingestion document id',
