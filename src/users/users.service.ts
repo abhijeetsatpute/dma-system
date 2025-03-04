@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } from '../config';
+import { faker } from '@faker-js/faker';
 
 import {
   ConflictException,
@@ -15,6 +16,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { DummyUserType } from '../core/constants';
 
 @Injectable()
 export class UsersService {
@@ -224,6 +226,38 @@ export class UsersService {
       await transaction.rollback();
       this.logger.error('UsersService', {
         message: `Error in deleteUser: ${error}`,
+      });
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async generateTestUsers(
+    userType: DummyUserType,
+    numerOfUsers: number,
+    password: string,
+  ): Promise<User[]> {
+    try {
+      const users = [];
+      for (let i = 0; i < numerOfUsers; i++) {
+        users.push({
+          username: faker.person.fullName(),
+          email: faker.internet.email(),
+          password: await bcrypt.hash(password, 10),
+          role: userType,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+
+      const createdUsers = await this.userRepository.bulkCreate(users);
+      this.logger.log(`${numerOfUsers} test users created successfully.`);
+      return createdUsers;
+    } catch (error) {
+      this.logger.error('UsersService', {
+        message: `Error in generateTestUsers: ${error}`,
       });
       throw new HttpException(
         error.message,

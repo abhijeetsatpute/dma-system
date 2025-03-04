@@ -1,12 +1,19 @@
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User } from './entities/user.entity';
 import { AuthGuard } from '../core/guards/auth.guard';
 import { RolesGuard } from '../core/guards/roles.guard';
 import { Roles } from '../core/decoraters/roles.decorater';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DummyUserType } from '../core/constants';
+
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import {
   Controller,
@@ -18,6 +25,7 @@ import {
   Put,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 
 @ApiTags('Auth / User Management')
@@ -69,6 +77,32 @@ export class UsersController {
   async getAllUsers(@Request() req) {
     const result = await this.usersService.getAllUsers(req.user.id);
     return { result };
+  }
+
+  @Post('generate/:usertype')
+  @ApiOperation({
+    summary: 'Generate test users',
+    description: 'Generate test users of role (editor or viewer only)',
+  })
+  @ApiParam({
+    name: 'usertype',
+    enum: DummyUserType,
+    description: 'Enter user type',
+  })
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth('JWT-auth')
+  @Roles('admin')
+  async generateTestUsers(
+    @Param('usertype') userType: DummyUserType,
+    @Query('users') users: number,
+    @Query('password') password: string,
+  ) {
+    const result = await this.usersService.generateTestUsers(
+      userType,
+      users,
+      password,
+    );
+    return { result, message: 'Test users generated successfully.' };
   }
 
   @Put(':id')

@@ -6,7 +6,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentStatus, Role } from '../core/constants';
 import { getModelToken } from '@nestjs/sequelize';
-import { NotFoundException } from '@nestjs/common';
+import { HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
 
 describe('DocumentsService', () => {
   let service: DocumentsService;
@@ -676,6 +676,26 @@ describe('DocumentsService', () => {
         entries: documents.rows,
         totalRecords: documents.count,
       });
+    });
+
+    it('should handle errors and throw an HttpException', async () => {
+      const user = { id: 2, roles: ['USER'] };
+
+      const errorMessage = 'Some error occurred';
+      jest
+        .spyOn(documentRepository, 'findAndCountAll')
+        .mockRejectedValueOnce(new Error(errorMessage));
+
+      try {
+        await service.getAllOngoingIngestions(
+          user,
+          DocumentStatus.PENDING,
+          10,
+          0,
+        );
+      } catch (error) {
+        expect(error.getStatus()).toBe(400);
+      }
     });
   });
 });

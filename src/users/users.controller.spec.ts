@@ -41,6 +41,7 @@ const mockUsersService = {
   getAllUsers: jest.fn().mockResolvedValue([mockUser]),
   updateUser: jest.fn().mockResolvedValue(mockUser),
   deleteUser: jest.fn().mockResolvedValue({}),
+  generateTestUsers: jest.fn().mockResolvedValue({}),
 };
 
 describe('UsersController', () => {
@@ -159,6 +160,57 @@ describe('UsersController', () => {
   describe('whoiam', () => {
     it('should return user info based on roles', async () => {
       await controller.whoiam({ user: mockUser });
+    });
+  });
+
+  describe('generateTestUsers', () => {
+    it('should successfully generate test users', async () => {
+      const mockGeneratedUsers = [
+        { id: 2, username: 'test_user', role: 'editor' },
+      ];
+      mockUsersService.generateTestUsers.mockResolvedValue(mockGeneratedUsers);
+
+      const result = await controller.generateTestUsers(
+        'editor' as any,
+        5,
+        'testPass',
+      );
+
+      expect(result).toEqual({
+        result: mockGeneratedUsers,
+        message: 'Test users generated successfully.',
+      });
+      expect(mockUsersService.generateTestUsers).toHaveBeenCalledWith(
+        'editor',
+        5,
+        'testPass',
+      );
+    });
+
+    it('should throw an error if user type is invalid', async () => {
+      mockUsersService.generateTestUsers.mockRejectedValueOnce(
+        new HttpException('Invalid user type', 400),
+      );
+
+      try {
+        await controller.generateTestUsers('invalidType' as any, 5, 'testPass');
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect(error.message).toBe('Invalid user type');
+      }
+    });
+
+    it('should throw an error if user generation fails', async () => {
+      mockUsersService.generateTestUsers.mockRejectedValueOnce(
+        new HttpException('User generation failed', 500),
+      );
+
+      try {
+        await controller.generateTestUsers('editor' as any, 5, 'testPass');
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect(error.message).toBe('User generation failed');
+      }
     });
   });
 });

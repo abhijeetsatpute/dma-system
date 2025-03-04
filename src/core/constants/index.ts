@@ -13,3 +13,8 @@ export enum DocumentStatus {
   COMPLETED = 'completed',
   FAILED = 'failed',
 }
+
+export enum DummyUserType {
+  EDITOR = 'editor',
+  VIEWER = 'viewer',
+}

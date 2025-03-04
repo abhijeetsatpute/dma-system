@@ -1,11 +1,3 @@
-import {
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { Document } from './entities/document.entity';
@@ -14,6 +6,15 @@ import { DocumentStatus, Role } from '../core/constants';
 import { S3Service } from '../s3/s3.service';
 import { AWS_S3_PATH } from '../config';
 import { Transaction } from 'sequelize';
+
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 
 @Injectable()
 export class DocumentsService {

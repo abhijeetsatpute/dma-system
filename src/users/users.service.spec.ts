@@ -7,6 +7,8 @@ import { getModelToken } from '@nestjs/sequelize';
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRATION } from '../config';
+import { DummyUserType } from '../core/constants';
+import { faker } from '@faker-js/faker/.';
 
 // Mock User data
 const mockUser = {
@@ -29,6 +31,20 @@ const mockUpdateUserDto = {
   role: 'editor',
 };
 
+const mockGenerateUserDto = {
+  userType: DummyUserType.EDITOR,
+  numerOfUsers: 5,
+  password: 'password123',
+};
+
+const mockGeneratedUsers = [
+  { username: 'user1', email: 'user1@example.com', role: 'admin' },
+  { username: 'user2', email: 'user2@example.com', role: 'admin' },
+  { username: 'user3', email: 'user3@example.com', role: 'admin' },
+  { username: 'user4', email: 'user4@example.com', role: 'admin' },
+  { username: 'user5', email: 'user5@example.com', role: 'admin' },
+];
+
 // Mock bcrypt comparison
 jest.mock('bcrypt');
 jest.mock('@nestjs/jwt');
@@ -45,6 +61,7 @@ describe('UsersService', () => {
     findAll: jest.fn(),
     destroy: jest.fn(),
     update: jest.fn(),
+    bulkCreate: jest.fn(),
     sequelize: {
       transaction: jest.fn().mockResolvedValue({
         commit: jest.fn(),
@@ -256,6 +273,52 @@ describe('UsersService', () => {
       } catch (error) {
         expect(error.message).toBe('Error deleting user');
       }
+    });
+  });
+
+  describe('generateTestUsers', () => {
+    it('should successfully generate test users', async () => {
+      userRepository.bulkCreate.mockResolvedValueOnce(mockGeneratedUsers);
+
+      const result = await service.generateTestUsers(
+        mockGenerateUserDto.userType,
+        mockGenerateUserDto.numerOfUsers,
+        mockGenerateUserDto.password,
+      );
+
+      expect(result.length).toBe(mockGenerateUserDto.numerOfUsers);
+      expect(userRepository.bulkCreate).toHaveBeenCalledWith(expect.any(Array));
+      expect(result).toEqual(expect.arrayContaining(mockGeneratedUsers));
+      expect(result[0]).toHaveProperty('username');
+      expect(result[0]).toHaveProperty('email');
+    });
+
+    it('should throw an error if generating test users fails', async () => {
+      const errorMessage = 'Error generating test users';
+      userRepository.bulkCreate.mockRejectedValueOnce(new Error(errorMessage));
+
+      try {
+        await service.generateTestUsers(
+          mockGenerateUserDto.userType,
+          mockGenerateUserDto.numerOfUsers,
+          mockGenerateUserDto.password,
+        );
+      } catch (error) {
+        expect(error.message).toBe(errorMessage);
+      }
+    });
+
+    it('should handle empty user array if no users are generated', async () => {
+      userRepository.bulkCreate.mockResolvedValueOnce([]);
+
+      const result = await service.generateTestUsers(
+        mockGenerateUserDto.userType,
+        0,
+        mockGenerateUserDto.password,
+      );
+
+      expect(result.length).toBe(0);
+      expect(userRepository.bulkCreate).toHaveBeenCalledWith(expect.any(Array));
     });
   });
 });
