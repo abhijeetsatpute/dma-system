@@ -10,7 +10,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { Document } from './entities/document.entity';
 import { InjectModel } from '@nestjs/sequelize';
-import { Role } from '../core/constants';
+import { DocumentStatus, Role } from '../core/constants';
 import { S3Service } from '../s3/s3.service';
 import { AWS_S3_PATH } from '../config';
 import { Transaction } from 'sequelize';
@@ -97,7 +97,7 @@ export class DocumentsService {
     }
   }
 
-  async findOne(id: number, user: any): Promise<string> {
+  async findOne(id: number, user: any): Promise<any> {
     try {
       const document = await this.documentRepository.findByPk(id);
 
@@ -114,7 +114,7 @@ export class DocumentsService {
       }
 
       const url = await this.s3Service.streamFile(document.path);
-      return url;
+      return { url, name: document.name };
     } catch (error) {
       this.logger.error(DocumentsService.name, {
         message: `Error in findOne:${error}`,
@@ -243,6 +243,131 @@ export class DocumentsService {
       this.logger.error(DocumentsService.name, {
         message: `Error in remove:${error}`,
       });
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async getAllOngoingIngestions(
+    user: any,
+    status: DocumentStatus,
+    limit: number,
+    offset: number,
+  ): Promise<any> {
+    try {
+      const {
+        id: userId,
+        roles: [userRole],
+      } = user;
+
+      // Define the base query object
+      const query: any = {
+        where: {
+          status,
+        },
+        limit,
+        offset,
+        order: [['updatedAt', 'DESC']],
+      };
+
+      // If user is not admin, restrict to their own documents
+      if (userRole !== Role.ADMIN) {
+        query.where.uploadedBy = userId;
+      }
+
+      const { count, rows: entries } =
+        await this.documentRepository.findAndCountAll(query);
+
+      return { totalRecords: count, entries };
+    } catch (error) {
+      this.logger.error(DocumentsService.name, {
+        message: `Error in getAllOngoingIngestions`,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async getDocumentStatus(user: any, id: number): Promise<any> {
+    try {
+      const {
+        id: userId,
+        roles: [userRole],
+      } = user;
+
+      // Define the base query object
+      const query: any = {
+        where: {
+          id,
+        },
+        attributes: ['status'],
+      };
+
+      // If user is not admin, add uploadedBy
+      if (userRole !== Role.ADMIN) {
+        query.where.uploadedBy = userId;
+      }
+
+      const result = await this.documentRepository.findOne(query);
+
+      if (!result) {
+        throw new NotFoundException('Document Not Found');
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error(DocumentsService.name, {
+        message: `Error in getDocumentStatus`,
+        error: error.message,
+        stack: error.stack,
+      });
+
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  async updateDocumentStatus(id: number, status: DocumentStatus): Promise<any> {
+    const transaction: Transaction =
+      await this.documentRepository.sequelize.transaction();
+    try {
+      const documentEntry = await this.documentRepository.findByPk(id, {
+        transaction,
+      });
+
+      if (!documentEntry) {
+        throw new NotFoundException('Document Not Found');
+      }
+      const result = await this.documentRepository.update(
+        {
+          status,
+        },
+        {
+          where: {
+            id,
+          },
+          transaction,
+        },
+      );
+      await transaction.commit();
+      return result;
+    } catch (error) {
+      await transaction.rollback();
+      this.logger.error(DocumentsService.name, {
+        message: `Error in updateDocumentStatus`,
+        error: error.message,
+        stack: error.stack,
+      });
+
       throw new HttpException(
         error.message,
         error.status || HttpStatus.BAD_REQUEST,
