@@ -218,6 +218,7 @@ describe('DocumentsService', () => {
       };
 
       const url = 'https://example.com/document';
+      const name = 'Document 1';
 
       jest
         .spyOn(documentRepository, 'findByPk')
@@ -225,7 +226,7 @@ describe('DocumentsService', () => {
       jest.spyOn(s3Service, 'streamFile').mockResolvedValueOnce(url);
 
       const result = await service.findOne(id, user);
-      expect(result).toBe(url);
+      expect(result).toStrictEqual({ url, name });
       expect(documentRepository.findByPk).toHaveBeenCalledTimes(1);
       expect(s3Service.streamFile).toHaveBeenCalledTimes(1);
     });
@@ -245,6 +246,7 @@ describe('DocumentsService', () => {
       };
 
       const url = 'https://example.com/document';
+      const name = 'Document 1';
 
       jest
         .spyOn(documentRepository, 'findByPk')
@@ -252,7 +254,7 @@ describe('DocumentsService', () => {
       jest.spyOn(s3Service, 'streamFile').mockResolvedValueOnce(url);
 
       const result = await service.findOne(id, user);
-      expect(result).toBe(url);
+      expect(result).toStrictEqual({ url, name });
       expect(documentRepository.findByPk).toHaveBeenCalledTimes(1);
       expect(s3Service.streamFile).toHaveBeenCalledTimes(1);
     });
